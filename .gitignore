@@ -20,6 +20,12 @@ dist-ssr
 /cache
 /artifacts
 
+# web3
+packages/web3/.dist
+packages/web3/.cache
+packages/web3/node_modules
+packages/web3/.env
+
 # TypeChain files
 /typechain
 /typechain-types
