@@ -4,7 +4,8 @@
     "description": "Package for web3 related code like contracts and utils",
     "main": "index.js",
     "scripts": {
-      "compile": "npx hardhat compile && npm run abis",
+      "compile": "npx hardhat compile && npm run types",
+      "types": "wagmi generate",
       "deploy": "npx hardhat ignition deploy ./ignition/modules/all.ts",
       "deploy:testnet": "npm run deploy -- --network testnet --verify",
       "deploy:mainnet": "npm run deploy -- --network mainnet --verify",
