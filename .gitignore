@@ -16,15 +16,20 @@ dist-ssr
 .env*
 !.env.sample
 
-# Hardhat files
-/cache
-/artifacts
-
 # web3
 packages/web3/.dist
-packages/web3/.cache
 packages/web3/node_modules
 packages/web3/.env
+packages/web3/cache
+packages/web3/artifacts
+
+# UI
+packages/ui/.dist
+packages/ui/node_modules
+packages/ui/.env
+packages/ui/cache
+packages/ui/src/routeTree.gen.ts
+
 
 # TypeChain files
 /typechain
