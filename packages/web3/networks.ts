@@ -6,10 +6,10 @@ const API_KEY = envParsed().ETHERSCAN_API_KEY;
 
 const sepolia = {
   url: "https://sepolia.drpc.org",
-  chainId: 11155420,
+  chainId: 11155111,
   urls: {
-    apiURL: "https://api-sepolia-optimism.etherscan.io/api",
-    browserURL: "https://sepolia-optimism.etherscan.io",
+    apiURL: "https://api-sepolia.etherscan.io/api",
+    browserURL: "https://sepolia.etherscan.io",
   },
 };
 
