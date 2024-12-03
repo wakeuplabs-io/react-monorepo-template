@@ -5,6 +5,7 @@
     "main": "index.js",
     "scripts": {
       "compile": "npx hardhat compile && npm run types",
+      "build": "npm i && npm run compile",
       "types": "wagmi generate",
       "deploy": "npx hardhat ignition deploy ./ignition/modules/all.ts",
       "deploy:testnet": "npm run deploy -- --network testnet --verify",

@@ -31,10 +31,20 @@ const base_sepolia = {
   },
 };
 
+const optimism = {
+  url: "https://optimism.io",
+  chainId: 10,
+  urls: {
+    apiURL: "https://api-optimism.etherscan.io/api",
+    browserURL: "https://optimism.etherscan.io",
+  },
+};
+
 const networks = {
   sepolia,
   ["optimism-sepolia"]: optimism_sepolia,
   ["base-sepolia"]: base_sepolia,
+  optimism,
 } as const;
 
 export type Networks = keyof typeof networks;
@@ -44,6 +54,8 @@ export const getNetwork = (key: Networks, isTestnet: boolean) => {
     return undefined;
   }
   const network = networks[key];
+  console.log("network", network);
+  console.log("key", key);
   const networkKey = isTestnet ? "testnet" : "mainnet";
   const privateKey = isTestnet ? TESTNET_PRIVATE_KEY : MAINNET_PRIVATE_KEY;
 
