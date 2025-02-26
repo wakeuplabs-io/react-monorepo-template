@@ -1,0 +1,28 @@
+name: Build and Generate Routes
+
+on:
+  pull_request:
+    branches: [main]
+    branches: [develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate TanStack router tree
+        run: npm run tanstack:generate 
+
+      - name: Build
+        run: npm run build

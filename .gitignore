@@ -28,7 +28,6 @@ packages/ui/.dist
 packages/ui/node_modules
 packages/ui/.env
 packages/ui/cache
-packages/ui/src/routeTree.gen.ts
 
 
 # TypeChain files
