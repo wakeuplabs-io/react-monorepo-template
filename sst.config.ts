@@ -25,8 +25,20 @@ export default $config({
       url: true
     });
 
+    const ui = new sst.StaticSite(`${PROJECT_NAME}-ui`, {
+      path: "packages/ui",
+      buildCommand: "npm run build",
+      buildOutput: "dist",
+      environment: {
+        VITE_API_URL: api.url,
+      },
+      indexPage: "index.html",
+      errorPage: "index.html",
+    });
+
     return {
-      api: api.url
-    }
+      api: api.url,
+      ui: ui.url,
+    };
   },
 });
