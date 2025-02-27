@@ -7,6 +7,9 @@
     "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
