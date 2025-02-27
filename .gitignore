@@ -40,3 +40,6 @@ packages/ui/src/routeTree.gen.ts
 /coverage.json
 
 .serverless
+
+# sst
+.sst
