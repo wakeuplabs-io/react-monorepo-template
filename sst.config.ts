@@ -1,6 +1,6 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
-const PROJECT_NAME = "test-subdomain";
+const PROJECT_NAME = "react-monorepo-template";
 const CUSTOMER = "wakeuplabs";
 
 export default $config({
