@@ -15,22 +15,22 @@
   "license": "ISC",
   "devDependencies": {
     "@types/aws-lambda": "8.10.147",
-    "@typescript-eslint/eslint-plugin": "7.6.0",
-    "@typescript-eslint/parser": "7.6.0",
-    "concurrently": "8.2.2",
-    "eslint": "8.57.0",
-    "eslint-plugin-react": "7.34.1",
-    "eslint-plugin-react-hooks": "4.6.0",
-    "eslint-plugin-react-refresh": "0.4.6",
-    "serverless": "3.38.0",
+    "@typescript-eslint/eslint-plugin": "8.26.1",
+    "@typescript-eslint/parser": "8.26.1",
+    "concurrently": "9.1.2",
+    "eslint": "9.22.0",
+    "eslint-plugin-react": "7.37.4",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.4.19",
+    "serverless": "4.8.0",
     "serverless-plugin-common-excludes": "4.0.0",
-    "serverless-plugin-include-dependencies": "6.0.0",
-    "serverless-s3-sync": "3.3.0"
+    "serverless-plugin-include-dependencies": "6.1.1",
+    "serverless-s3-sync": "3.4.0"
   },
   "dependencies": {
-    "@aws-sdk/client-ec2": "^3.764.0",
-    "dotenv": "16.4.5",
-    "sst": "3.9.15",
-    "zod": "3.22.4"
+    "@aws-sdk/client-ec2": "3.766.0",
+    "dotenv": "16.4.7",
+    "sst": "3.9.36",
+    "zod": "3.24.2"
   }
 }
