@@ -1,23 +1,110 @@
 /// <reference path="./.sst/platform/config.d.ts" />
-import { VPC_NAME, AVAILABILITY_ZONES, getOrCreateSharedVpc } from "./infrastructure/vpc";
+import { EC2Client, DescribeVpcsCommand } from "@aws-sdk/client-ec2";
 
 // Project configuration constants
 const PROJECT_NAME = "react-monorepo-template";
 const CUSTOMER = "wakeuplabs";
 
+// AWS Region configuration
+// Choose your preferred region. Common options:
+// - "us-east-1" (N. Virginia)
+// - "us-west-2" (Oregon)
+// - "eu-west-1" (Ireland)
+// - "sa-east-1" (São Paulo)
+const AWS_REGION = "us-east-1";
+const AVAILABILITY_ZONES = [`${AWS_REGION}a`, `${AWS_REGION}b`];
+
+// VPC configuration
+// You can leave these default values unless you need specific VPC settings
+const VPC_NAME = `${PROJECT_NAME}-vpc`;
+const VPC_NAME_TAG = `${VPC_NAME} VPC`;
+const MAX_VPCS = 5; // AWS default limit of VPCs per region
+
+/**
+ * VPC Configuration Notes:
+ * 
+ * VPCs are not required for all AWS services:
+ * - Not Required: Lambda functions, Static websites, S3 buckets
+ * - Required: EC2 instances, RDS databases, ECS containers
+ * 
+ * We need VPC configuration when:
+ * 1. Running containerized applications (ECS/EKS)
+ * 2. Hosting databases (RDS, ElastiCache)
+ * 3. Running EC2 instances
+ * 4. Requiring specific network isolation or security
+ * 
+ * For serverless applications (Lambda + S3 + API Gateway), 
+ * you can skip VPC configuration unless you need private network access.
+ */
+
+/**
+ * Handles VPC creation or retrieval logic
+ * This function will:
+ * 1. Try to find an existing VPC by name tag
+ * 2. If not found, check if we've reached max VPCs
+ * 3. If we haven't reached max, create a new VPC
+ */
+async function getOrCreateVpc(ec2Client: EC2Client, vpcNameTag: string, projectName: string) {
+  // Search for a specific VPC by its name tag
+  const commandToGetSpecificVpc = new DescribeVpcsCommand({
+    Filters:[{
+      Name: "tag:Name",
+      Values: [vpcNameTag]
+    }]
+  });
+
+  // Get all VPCs to check against limit
+  const commandToGetAllVpcs = new DescribeVpcsCommand({});
+
+  // Execute both commands to get VPC information
+  const {Vpcs: specificVpc} = await ec2Client.send(commandToGetSpecificVpc);
+  const {Vpcs: allVpcs} = await ec2Client.send(commandToGetAllVpcs);
+  const maxVpcReached = allVpcs.length >= MAX_VPCS;
+
+  // If we found our specific VPC, use it
+  if(specificVpc.length > 3) {
+    console.log("VPC found");
+    const vpcId = specificVpc[0].VpcId;
+    return sst.aws.Vpc.get(VPC_NAME, vpcId);
+  } 
+  
+  // If we've hit the VPC limit, return undefined to handle fallback logic
+  if(maxVpcReached) {
+    console.log("Max VPCs reached, searching for existing VPC...");
+    
+    // Find first VPC with a Name tag
+    const existingVpc = allVpcs.find(vpc => {
+      const nameTag = vpc.Tags?.find(tag => tag.Key === "Name");
+      if (nameTag) {
+        console.log("Found VPC with name:", nameTag.Value);
+        return true;
+      }
+      return false;
+    });
+
+    if (existingVpc && existingVpc.VpcId) {
+      console.log("Using existing VPC:", existingVpc.VpcId);
+      const nameTag = existingVpc.Tags?.find(tag => tag.Key === "Name");
+      return sst.aws.Vpc.get(nameTag?.Value || "default-vpc", existingVpc.VpcId);
+    }
+    
+    throw new Error("No suitable VPC found");
+  } 
+  
+  // Create new VPC if none found and under limit
+  console.log("Creating new VPC");
+  return new sst.aws.Vpc(`${projectName}-vpc`, { az: AVAILABILITY_ZONES });
+}
+
 export default $config({
-  // App configuration - defines general settings for the SST application
   app(input) {
     return {
       name: PROJECT_NAME,
-      // Retention policy: retain resources in production, remove in other environments
       removal: input?.stage === "production" ? "retain" : "remove",
-      // Protect production resources from accidental deletion
       protect: ["production"].includes(input?.stage),
       home: "aws",
       providers: {
         aws: {
-          // Add customer tag to all AWS resources for better organization and cost tracking
           defaultTags: {
             tags: { customer: CUSTOMER },
           },
@@ -25,47 +112,28 @@ export default $config({
       },
     };
   },
-  // Resource definition and deployment configuration
   async run() {
-    // Step 1: Try to find an existing shared VPC
-    // This is crucial for solving the VPC/security group limit problem
-    const existingVpcId = await getOrCreateSharedVpc();
+    const ec2Client = new EC2Client({ region: AWS_REGION });
+    const vpc = await getOrCreateVpc(ec2Client, VPC_NAME_TAG, PROJECT_NAME);
 
-    // Step 2: Configure VPC settings based on whether we found an existing VPC
-    const vpcConfig = {
-      // If we found a VPC, don't create a new one (false); otherwise create one (true)
-      create: existingVpcId ? false : true,
-      name: VPC_NAME,
-      availabilityZones: AVAILABILITY_ZONES,
-      // If an existing VPC was found, add the importId property to use that VPC
-      // This is the key to reusing the existing VPC instead of creating a new one
-      ...(existingVpcId && { importId: existingVpcId }),
-    };
-
-    // Step 3: Define the API Lambda function with the shared VPC configuration
-    // This ensures the function uses the shared VPC instead of creating its own
     const api = new sst.aws.Function(`${PROJECT_NAME}-api`, {
       handler: "packages/api/src/app.handler",
-      url: true,
-      // Associate the function with the shared VPC
-      // This is where we apply our VPC reuse strategy
-      vpc: vpcConfig,
+      url: true
     });
 
-    // Step 4: Define the UI static site
-    // Note: Static sites don't need VPC configuration as they're served from S3/CloudFront
-    const ui = new sst.StaticSite(`${PROJECT_NAME}-ui`, {
+    const ui = new sst.aws.StaticSite(`${PROJECT_NAME}-ui`, {
       path: "packages/ui",
-      buildCommand: "npm run build",
-      buildOutput: "dist",
+      build: {
+        command: "npm run build",
+        output: "dist",
+      },
       environment: {
         VITE_API_URL: api.url,
       },
       indexPage: "index.html",
       errorPage: "index.html",
     });
-
-    // Return the URLs of the deployed resources
+  
     return {
       api: api.url,
       ui: ui.url,
