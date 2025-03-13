@@ -21,7 +21,8 @@ jobs:
         run: npm install
 
       - name: Generate TanStack router tree
-        run: npm run tanstack:generate 
+        working-directory: packages/ui
+        run: npx @tanstack/router-vite-plugin generate
 
       - name: Build
         run: npm run build

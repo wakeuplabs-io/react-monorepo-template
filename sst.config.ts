@@ -33,14 +33,33 @@ const VPC_ID = "vpc-00b7f7fb871e913fb"
  */
 
 /**
- * Handles VPC creation or retrieval logic
- * This function will:
- * 1. Try to find an existing VPC by name tag
- * 2. If not found, check if we've reached max VPCs
- * 3. If we haven't reached max, create a new VPC
+ * Retrieves an existing VPC by its name tag or creates a new one if not found.
+ * 
+ * This function performs the following steps:
+ * 1. Searches for a VPC using the provided name tag
+ * 2. If found and matches the expected VPC_ID:
+ *    - Returns the existing VPC instance
+ * 3. If not found or VPC_ID doesn't match:
+ *    - Creates a new VPC with the specified availability zones
+ * 
+ * @param {EC2Client} ec2Client - AWS EC2 client instance for making API calls
+ * @param {string} vpcNameTag - The name tag to search for or use when creating a new VPC
+ * @returns {Promise<sst.aws.Vpc>} Returns either the existing or newly created VPC
+ * 
+ * @example
+ * const vpc = await getOrCreateVpc(ec2Client, "shared-vpc");
+ * 
+ * @remarks
+ * - The function uses AWS SDK v3's EC2Client for VPC operations
+ * - VPC creation is only needed for services requiring network isolation:
+ *   - EC2 instances
+ *   - RDS databases
+ *   - ECS containers
+ *   - Services requiring private network access
+ * - Serverless services (Lambda, S3, API Gateway) don't require VPC by default
  */
 async function getOrCreateVpc(ec2Client: EC2Client, vpcNameTag: string) {
-  // Create a command to get the VPC information
+  // Create a command to get the VPC information using name tag filter
   const commandToGetSpecificVpc = new DescribeVpcsCommand({
     Filters:[{
       Name: "tag:Name",
