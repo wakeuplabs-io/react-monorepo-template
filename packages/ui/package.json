@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "npm install && npx tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "routes": "@tanstack/router-vite-plugin generate"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.40.0",
     "@tanstack/react-router": "^1.114.17",
+    "@tanstack/router-cli": "^1.114.17",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
