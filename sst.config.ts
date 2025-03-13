@@ -2,8 +2,8 @@
 import { EC2Client, DescribeVpcsCommand } from "@aws-sdk/client-ec2";
 
 // Project configuration constants
-const PROJECT_NAME: string = "testing-monorepo-1";  // Must be set by developer
-const CUSTOMER: string = "testing";      // Must be set by developer
+const PROJECT_NAME: string = "";  // Must be set by developer
+const CUSTOMER: string = "";      // Must be set by developer
 
 // We can alternate between regions to create the VPC in a different region, take in mind that we can only use one region per VPC
 // in case we want to use N.virginia we can use the secret SST_AWS_REGION_ALT
