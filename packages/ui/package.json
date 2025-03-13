@@ -14,7 +14,8 @@
     "@tanstack/react-router": "^1.114.17",
     "@tanstack/router-cli": "^1.114.17",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "dotenv": "16.4.7"
   },
   "devDependencies": {
     "@tanstack/router-devtools": "^1.114.17",
