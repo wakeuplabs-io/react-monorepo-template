@@ -2,8 +2,8 @@
 import { EC2Client, DescribeVpcsCommand } from "@aws-sdk/client-ec2";
 
 // Project configuration constants
-const PROJECT_NAME = "testing-monorepo-1";
-const CUSTOMER = "testing";
+const PROJECT_NAME: string = "";  // Must be set by developer
+const CUSTOMER: string = "";      // Must be set by developer
 
 // We can alternate between regions to create the VPC in a different region, take in mind that we can only use one region per VPC
 // in case we want to use N.virginia we can use the secret SST_AWS_REGION_ALT
@@ -60,8 +60,38 @@ async function getOrCreateVpc(ec2Client: EC2Client, vpcNameTag: string) {
   }
 }
 
+// Validation function for project configuration
+function validateConfig() {
+  const errors: string[] = [];
+  
+  if (!PROJECT_NAME || PROJECT_NAME.trim() === "") {
+    errors.push("PROJECT_NAME must be set (e.g., 'testing-monorepo-1')");
+  }
+  
+  if (!CUSTOMER || CUSTOMER.trim() === "") {
+    errors.push("CUSTOMER must be set (e.g., 'testing')");
+  }
+
+  if (errors.length > 0) {
+    // Imprimir el error directamente a la consola
+    console.error("\n\n==============================================");
+    console.error("⛔️ Configuration Error");
+    console.error("==============================================");
+    console.error("Missing required values in sst.config.ts:");
+    errors.forEach(err => console.error(`  • ${err}`));
+    console.error("\n❌ Deployment blocked until these values are set");
+    console.error("==============================================\n\n");
+    
+    // También lanzar el error para que SST lo capture
+    throw new Error("Configuration validation failed");
+  }
+}
+
 export default $config({
   app(input) {
+    // Validate configuration before proceeding
+    validateConfig();
+
     return {
       name: PROJECT_NAME,
       removal: input?.stage === "production" ? "retain" : "remove",
@@ -77,8 +107,11 @@ export default $config({
     };
   },
   async run() {
-   const ec2Client = new EC2Client({ region: AWS_REGION });
-   const vpc = await getOrCreateVpc(ec2Client, VPC_NAME);
+    // Validate configuration again in case run() is called directly
+    validateConfig();
+    
+    const ec2Client = new EC2Client({ region: AWS_REGION });
+    const vpc = await getOrCreateVpc(ec2Client, VPC_NAME);
    
     const api = new sst.aws.Function(`${PROJECT_NAME}-api`, {
       handler: "packages/api/src/app.handler",
