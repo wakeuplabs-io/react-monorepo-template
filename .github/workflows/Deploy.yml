@@ -51,10 +51,10 @@ jobs:
 
       - name: Deploy
         run: |
-          # Establecer nivel de log más detallado
+          # Set detailed log level
           export SST_LOG_LEVEL=debug
           
-          # Ejecutar con --verbose para más detalles
+          # Run with --verbose for more details
           if ! npx sst deploy --stage ${{ github.ref_name }} --verbose; then
             echo "::group::Deployment Error"
             echo "Deployment failed. Error details:"

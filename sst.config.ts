@@ -2,8 +2,8 @@
 import { EC2Client, DescribeVpcsCommand } from "@aws-sdk/client-ec2";
 
 // Project configuration constants
-const PROJECT_NAME: string = "";  // Must be set by developer
-const CUSTOMER: string = "";      // Must be set by developer
+const PROJECT_NAME: string = "testing-monorepo-1";  // Must be set by developer
+const CUSTOMER: string = "testing";      // Must be set by developer
 
 // We can alternate between regions to create the VPC in a different region, take in mind that we can only use one region per VPC
 // in case we want to use N.virginia we can use the secret SST_AWS_REGION_ALT
@@ -73,7 +73,7 @@ function validateConfig() {
   }
 
   if (errors.length > 0) {
-    // Imprimir el error directamente a la consola
+    // Print error directly to console
     console.error("\n\n==============================================");
     console.error("⛔️ Configuration Error");
     console.error("==============================================");
@@ -82,7 +82,7 @@ function validateConfig() {
     console.error("\n❌ Deployment blocked until these values are set");
     console.error("==============================================\n\n");
     
-    // También lanzar el error para que SST lo capture
+    // Also throw error for SST to catch
     throw new Error("Configuration validation failed");
   }
 }
