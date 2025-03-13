@@ -5,13 +5,30 @@ on:
     branches:
       - main
       - develop
+      - batch-missing-parts
 
 # Concurrency group name ensures concurrent workflow runs wait for any in-progress job to finish
 concurrency:
    group: merge-${{ github.ref }}
 
 jobs:
+  Validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate Configuration
+        run: |
+          if grep -q 'const PROJECT_NAME: string = "";' sst.config.ts || grep -q 'const CUSTOMER: string = "";' sst.config.ts; then
+            echo "::error::Project configuration is not set. Please set PROJECT_NAME and CUSTOMER in sst.config.ts"
+            echo "Example configuration:"
+            echo "const PROJECT_NAME = \"testing-monorepo-1\";"
+            echo "const CUSTOMER = \"testing\";"
+            exit 1
+          fi
+
   Deploy:
+    needs: Validate
     runs-on: ubuntu-latest
     steps:
       - name: Git clone the repository

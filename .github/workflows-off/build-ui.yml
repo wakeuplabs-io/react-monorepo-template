@@ -2,8 +2,7 @@ name: Build and Generate Routes
 
 on:
   pull_request:
-    branches: [main]
-    branches: [develop]
+    branches: [main, develop]
 
 jobs:
   build:

@@ -30,7 +30,7 @@
   "dependencies": {
     "@aws-sdk/client-ec2": "3.766.0",
     "dotenv": "16.4.7",
-    "sst": "3.9.36",
+    "sst": "3.9.37",
     "zod": "3.24.2"
   }
 }
