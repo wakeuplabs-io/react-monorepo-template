@@ -2,8 +2,8 @@
 import { EC2Client, DescribeVpcsCommand } from "@aws-sdk/client-ec2";
 
 // Project configuration constants
-const PROJECT_NAME = "react-monorepo-template";
-const CUSTOMER = "wakeuplabs";
+const PROJECT_NAME = "";
+const CUSTOMER = "";
 
 // We can alternate between regions to create the VPC in a different region, take in mind that we can only use one region per VPC
 // in case we want to use N.virginia we can use the secret SST_AWS_REGION_ALT
