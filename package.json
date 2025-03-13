@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "npm -w packages/* run build",
+    "build": "npm run build --workspaces --if-present",
     "dev": "concurrently --kill-others \"npm -w api run dev\" \"npm -w ui run dev\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
