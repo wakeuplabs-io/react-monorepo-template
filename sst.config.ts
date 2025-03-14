@@ -2,23 +2,18 @@
 import { EC2Client, DescribeVpcsCommand } from "@aws-sdk/client-ec2";
 
 // Project configuration constants
-const PROJECT_NAME = "react-monorepo-template";
-const CUSTOMER = "wakeuplabs";
+const PROJECT_NAME: string = "";  // Must be set by developer
+const CUSTOMER: string = "";      // Must be set by developer
 
-// AWS Region configuration
-// Choose your preferred region. Common options:
-// - "us-east-1" (N. Virginia)
-// - "us-west-2" (Oregon)
-// - "eu-west-1" (Ireland)
-// - "sa-east-1" (São Paulo)
-const AWS_REGION = "us-east-1";
+// We can alternate between regions to create the VPC in a different region, take in mind that we can only use one region per VPC
+// in case we want to use N.virginia we can use the secret SST_AWS_REGION_ALT
+const AWS_REGION = `${process.env.SST_AWS_REGION}`;
 const AVAILABILITY_ZONES = [`${AWS_REGION}a`, `${AWS_REGION}b`];
 
 // VPC configuration
 // You can leave these default values unless you need specific VPC settings
-const VPC_NAME = `${PROJECT_NAME}-vpc`;
-const VPC_NAME_TAG = `${VPC_NAME} VPC`;
-const MAX_VPCS = 5; // AWS default limit of VPCs per region
+const VPC_NAME = "shared-vpc";
+const VPC_ID = "vpc-00b7f7fb871e913fb"
 
 /**
  * VPC Configuration Notes:
@@ -38,14 +33,33 @@ const MAX_VPCS = 5; // AWS default limit of VPCs per region
  */
 
 /**
- * Handles VPC creation or retrieval logic
- * This function will:
- * 1. Try to find an existing VPC by name tag
- * 2. If not found, check if we've reached max VPCs
- * 3. If we haven't reached max, create a new VPC
+ * Retrieves an existing VPC by its name tag or creates a new one if not found.
+ * 
+ * This function performs the following steps:
+ * 1. Searches for a VPC using the provided name tag
+ * 2. If found and matches the expected VPC_ID:
+ *    - Returns the existing VPC instance
+ * 3. If not found or VPC_ID doesn't match:
+ *    - Creates a new VPC with the specified availability zones
+ * 
+ * @param {EC2Client} ec2Client - AWS EC2 client instance for making API calls
+ * @param {string} vpcNameTag - The name tag to search for or use when creating a new VPC
+ * @returns {Promise<sst.aws.Vpc>} Returns either the existing or newly created VPC
+ * 
+ * @example
+ * const vpc = await getOrCreateVpc(ec2Client, "shared-vpc");
+ * 
+ * @remarks
+ * - The function uses AWS SDK v3's EC2Client for VPC operations
+ * - VPC creation is only needed for services requiring network isolation:
+ *   - EC2 instances
+ *   - RDS databases
+ *   - ECS containers
+ *   - Services requiring private network access
+ * - Serverless services (Lambda, S3, API Gateway) don't require VPC by default
  */
-async function getOrCreateVpc(ec2Client: EC2Client, vpcNameTag: string, projectName: string) {
-  // Search for a specific VPC by its name tag
+async function getOrCreateVpc(ec2Client: EC2Client, vpcNameTag: string) {
+  // Create a command to get the VPC information using name tag filter
   const commandToGetSpecificVpc = new DescribeVpcsCommand({
     Filters:[{
       Name: "tag:Name",
@@ -53,51 +67,50 @@ async function getOrCreateVpc(ec2Client: EC2Client, vpcNameTag: string, projectN
     }]
   });
 
-  // Get all VPCs to check against limit
-  const commandToGetAllVpcs = new DescribeVpcsCommand({});
-
-  // Execute both commands to get VPC information
+  // Execute this command to get the VPC information
   const {Vpcs: specificVpc} = await ec2Client.send(commandToGetSpecificVpc);
-  const {Vpcs: allVpcs} = await ec2Client.send(commandToGetAllVpcs);
-  const maxVpcReached = allVpcs.length >= MAX_VPCS;
 
-  // If we found our specific VPC, use it
-  if(specificVpc.length > 3) {
-    console.log("VPC found");
-    const vpcId = specificVpc[0].VpcId;
-    return sst.aws.Vpc.get(VPC_NAME, vpcId);
-  } 
-  
-  // If we've hit the VPC limit, return undefined to handle fallback logic
-  if(maxVpcReached) {
-    console.log("Max VPCs reached, searching for existing VPC...");
-    
-    // Find first VPC with a Name tag
-    const existingVpc = allVpcs.find(vpc => {
-      const nameTag = vpc.Tags?.find(tag => tag.Key === "Name");
-      if (nameTag) {
-        console.log("Found VPC with name:", nameTag.Value);
-        return true;
-      }
-      return false;
-    });
+  if(specificVpc.length > 0 && specificVpc[0].VpcId === VPC_ID) {
+    console.log("VPC found")
+    return sst.aws.Vpc.get(VPC_NAME, VPC_ID);
+  } else {
+    console.log("VPC not found & creating new VPC")
+    return new sst.aws.Vpc(VPC_NAME, { az: AVAILABILITY_ZONES});
+  }
+}
 
-    if (existingVpc && existingVpc.VpcId) {
-      console.log("Using existing VPC:", existingVpc.VpcId);
-      const nameTag = existingVpc.Tags?.find(tag => tag.Key === "Name");
-      return sst.aws.Vpc.get(nameTag?.Value || "default-vpc", existingVpc.VpcId);
-    }
-    
-    throw new Error("No suitable VPC found");
-  } 
+// Validation function for project configuration
+function validateConfig() {
+  const errors: string[] = [];
   
-  // Create new VPC if none found and under limit
-  console.log("Creating new VPC");
-  return new sst.aws.Vpc(`${projectName}-vpc`, { az: AVAILABILITY_ZONES });
+  if (!PROJECT_NAME || PROJECT_NAME.trim() === "") {
+    errors.push("PROJECT_NAME must be set (e.g., 'testing-monorepo-1')");
+  }
+  
+  if (!CUSTOMER || CUSTOMER.trim() === "") {
+    errors.push("CUSTOMER must be set (e.g., 'testing')");
+  }
+
+  if (errors.length > 0) {
+    // Print error directly to console
+    console.error("\n\n==============================================");
+    console.error("⛔️ Configuration Error");
+    console.error("==============================================");
+    console.error("Missing required values in sst.config.ts:");
+    errors.forEach(err => console.error(`  • ${err}`));
+    console.error("\n❌ Deployment blocked until these values are set");
+    console.error("==============================================\n\n");
+    
+    // Also throw error for SST to catch
+    throw new Error("Configuration validation failed");
+  }
 }
 
 export default $config({
   app(input) {
+    // Validate configuration before proceeding
+    validateConfig();
+
     return {
       name: PROJECT_NAME,
       removal: input?.stage === "production" ? "retain" : "remove",
@@ -113,9 +126,12 @@ export default $config({
     };
   },
   async run() {
+    // Validate configuration again in case run() is called directly
+    validateConfig();
+    
     const ec2Client = new EC2Client({ region: AWS_REGION });
-    const vpc = await getOrCreateVpc(ec2Client, VPC_NAME_TAG, PROJECT_NAME);
-
+    const vpc = await getOrCreateVpc(ec2Client, VPC_NAME);
+   
     const api = new sst.aws.Function(`${PROJECT_NAME}-api`, {
       handler: "packages/api/src/app.handler",
       url: true

@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "pnpm -r run build",
-    "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
+    "build": "npm run build --workspaces --if-present",
+    "dev": "concurrently --kill-others \"npm -w api run dev\" \"npm -w ui run dev\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "workspaces": [
@@ -30,7 +30,7 @@
   "dependencies": {
     "@aws-sdk/client-ec2": "3.766.0",
     "dotenv": "16.4.7",
-    "sst": "3.9.36",
+    "sst": "3.9.37",
     "zod": "3.24.2"
   }
 }

@@ -2,8 +2,7 @@ name: Build and Generate Routes
 
 on:
   pull_request:
-    branches: [main]
-    branches: [develop]
+    branches: [main, develop]
 
 jobs:
   build:
@@ -18,11 +17,17 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install UI dependencies
+        working-directory: packages/ui
         run: npm install
 
       - name: Generate TanStack router tree
-        run: npm run tanstack:generate 
+        working-directory: packages/ui
+        run: npx @tanstack/router-cli generate-routefiles --routesDirectory src/routes
 
-      - name: Build
+      - name: Build UI only
+        working-directory: packages/ui
         run: npm run build
