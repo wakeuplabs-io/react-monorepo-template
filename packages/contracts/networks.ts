@@ -54,8 +54,6 @@ export const getNetwork = (key: Networks, isTestnet: boolean) => {
     return undefined;
   }
   const network = networks[key];
-  console.log("network", network);
-  console.log("key", key);
   const networkKey = isTestnet ? "testnet" : "mainnet";
   const privateKey = isTestnet ? TESTNET_PRIVATE_KEY : MAINNET_PRIVATE_KEY;
 
