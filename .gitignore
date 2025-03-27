@@ -16,12 +16,12 @@ dist-ssr
 .env*
 !.env.sample
 
-# web3
-packages/web3/.dist
-packages/web3/node_modules
-packages/web3/.env
-packages/web3/cache
-packages/web3/artifacts
+# contracts
+packages/contracts/.dist
+packages/contracts/node_modules
+packages/contracts/.env
+packages/contracts/cache
+packages/contracts/artifacts
 
 # UI
 packages/ui/.dist
@@ -31,8 +31,8 @@ packages/ui/cache
 
 
 # TypeChain files
-/typechain
-/typechain-types
+/packages/contracts/typechain
+/packages/contracts/typechain-types
 
 # solidity-coverage files
 /coverage

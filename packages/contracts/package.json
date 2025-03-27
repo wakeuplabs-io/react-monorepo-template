@@ -4,36 +4,40 @@
     "description": "Package for web3 related code like contracts and utils",
     "main": "index.js",
     "scripts": {
-      "compile": "npx hardhat compile && npm run types",
-      "build": "npm run compile",
-      "types": "wagmi generate",
-      "deploy": "npx hardhat ignition deploy ./ignition/modules/all.ts",
-      "deploy:testnet": "npm run deploy -- --network testnet --verify",
-      "deploy:mainnet": "npm run deploy -- --network mainnet --verify",
-      "test": "npx hardhat test"
+        "compile": "npx hardhat compile && npm run types",
+        "build": "npm run compile",
+        "types": "wagmi generate",
+        "deploy:erc20": "npx hardhat ignition deploy ./ignition/modules/MyTokenModule.ts --parameters.initialSupply 1000000000000000000000  --network testnet",
+        "deploy:erc721": "npx hardhat ignition deploy ./ignition/modules/MyNFTModule.ts  --network testnet",
+        "test": "npx hardhat test"
     },
     "repository": {
-      "type": "git",
-      "url": "git+https://github.com/wakeuplabs-io"
+        "type": "git",
+        "url": "git+https://github.com/wakeuplabs-io"
     },
     "keywords": [
-      "web3",
-      "solidity",
-      "blockchain"
+        "web3",
+        "solidity",
+        "blockchain"
     ],
     "author": "Wake Up Labs",
     "license": "ISC",
     "dependencies": {
-      "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
-      "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
-      "@openzeppelin/contracts": "^5.1.0",
-      "@wagmi/cli": "^2.1.16",
-      "hardhat": "^2.22.15",
-      "mocha": "^11.1.0",
-      "viem": "^2.23.10"
+        "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
+        "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
+        "@wagmi/cli": "^2.1.16",
+        "mocha": "^11.1.0",
+        "viem": "^2.23.10"
     },
     "devDependencies": {
-      "@types/mocha": "^10.0.9",
-      "ts-node": "^10.9.2"
+        "@nomicfoundation/hardhat-ignition-viem": "^0.15.10",
+        "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+        "@openzeppelin/contracts": "^5.2.0",
+        "@typechain/hardhat": "^9.1.0",
+        "@types/mocha": "^10.0.9",
+        "hardhat": "^2.22.19",
+        "ts-node": "^10.9.2",
+        "typechain": "^8.3.2",
+        "typescript": "^5.8.2"
     }
-  }
+}

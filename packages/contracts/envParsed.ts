@@ -15,9 +15,9 @@ const env = {
 const envSchema = z
   .object({
     NETWORK_TESTNET: z.string().transform((x) => x as Address),
-    NETWORK_MAINNET: z.string().transform((x) => x as Address),
+    NETWORK_MAINNET: z.string().transform((x) => x as Address).optional(),
     TESTNET_PRIVATE_KEY: z.string().transform((x) => x as Address),
-    MAINNET_PRIVATE_KEY: z.string().transform((x) => x as Address),
+    MAINNET_PRIVATE_KEY: z.string().transform((x) => x as Address).optional(),
     ETHERSCAN_API_KEY: z.string().transform((x) => x as Address),
   })
   .required();

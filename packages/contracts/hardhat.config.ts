@@ -1,8 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox-viem";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "solidity-coverage";
-
+import "@nomicfoundation/hardhat-toolbox";
 import { getNetwork, Networks } from "./networks";
 import envParsed from "./envParsed";
 
@@ -20,7 +19,9 @@ const config: HardhatUserConfig = {
     testnet: networkTestnet ? networkTestnet.network : undefined,
     mainnet: networkMainnet ? networkMainnet.network : undefined,
   },
-
+  typechain: {
+    outDir: "typechain-types",
+  },
   etherscan: {
     apiKey: networkTestnet ? networkTestnet.apiKeys : undefined,
     customChains: networkTestnet ? networkTestnet.customChains : undefined,
@@ -29,5 +30,6 @@ const config: HardhatUserConfig = {
     enabled: false,
   },
 };
+
 
 export default config;
