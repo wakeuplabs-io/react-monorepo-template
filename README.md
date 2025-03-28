@@ -37,7 +37,7 @@ Intended in order to avoid merge conflicts on this repo
 Package versions should always be defined specifically (without the simbol ^)
 This ensures that even if the lock is deleted, same versions would be reinstalled.
 
-Having the lock inside your repo is useful for CI package caching and to avoid version diff on fresh install. 
+Having the lock inside your repo is useful for CI package caching and to avoid version diff on fresh install.
 
 ### Github workflow is deactivated
 
