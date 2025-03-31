@@ -5,7 +5,7 @@
 
 declare module "sst" {
   export interface Resource {
-    "react-monorepo-template-api": {
+    "test-hono-api-api": {
       "name": string
       "type": "sst.aws.Function"
       "url": string
