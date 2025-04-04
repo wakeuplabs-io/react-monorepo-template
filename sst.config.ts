@@ -15,6 +15,10 @@ const AVAILABILITY_ZONES = [`${AWS_REGION}a`, `${AWS_REGION}b`];
 const VPC_NAME = "shared-vpc";
 const VPC_ID = "vpc-00b7f7fb871e913fb";
 
+const GOOGLE_CLIENT_ID = `${process.env.GOOGLE_CLIENT_ID}`
+const UI_URL = `${process.env.UI_URL ?? "https://my-test-app.wakeuplabs.link"}`
+const GOOGLE_CLIENT_SECRET = `${process.env.GOOGLE_CLIENT_SECRET}`
+
 /**
  * VPC Configuration Notes:
  *
@@ -92,6 +96,12 @@ function validateConfig() {
   if (!CUSTOMER || CUSTOMER.trim() === "") {
     errors.push("CUSTOMER must be set (e.g., 'testing')");
   }
+  if (!UI_URL || CUSTOMER.trim() === "")
+    errors.push("UI_URL must be set (e.g., 'https://project-name.wakeuplabs.link' or 'https://www.project-name.xyz')")
+  if (!GOOGLE_CLIENT_ID || CUSTOMER.trim() === "")
+    errors.push("GOOGLE_CLIENT_ID must be set (e.g., '123456789012-1a23b56c7defghi89012jklmnopqrs3t.apps.googleusercontent.com'");
+  if (!GOOGLE_CLIENT_SECRET || CUSTOMER.trim() === "")
+    errors.push("GOOGLE_CLIENT_SECRET must be set (e.g., 'ABCDEF-GHIJ1kHIjklMnopqrstuvwx2YzAB'");
 
   if (errors.length > 0) {
     // Print error directly to console
@@ -121,7 +131,7 @@ export default $config({
       providers: {
         aws: {
           defaultTags: {
-            tags: { customer: CUSTOMER },
+            tags: { customer: CUSTOMER, stage: input.stage },
           },
         },
       },
@@ -130,14 +140,69 @@ export default $config({
   async run() {
     // Validate configuration again in case run() is called directly
     validateConfig();
+    const IS_PRODUCTION = $app.stage === 'production'
 
-    const ec2Client = new EC2Client({ region: AWS_REGION });
-    const vpc = await getOrCreateVpc(ec2Client, VPC_NAME);
+    // -> Cognito Pool
+    // To add google auth to the app
+    const userPool = new sst.aws.CognitoUserPool('user-pool');
+    const GoogleClientId = GOOGLE_CLIENT_ID;
+    const GoogleClientSecret = GOOGLE_CLIENT_SECRET;
 
-    const api = new sst.aws.Function(`${PROJECT_NAME}-api`, {
+    const provider = userPool.addIdentityProvider('Google', {
+      type: 'google',
+      details: {
+        authorize_scopes: 'email profile',
+        client_id: GoogleClientId,
+        client_secret: GoogleClientSecret,
+      },
+      attributes: {
+        email: 'email',
+        name: 'name',
+        username: 'sub',
+      },
+    });
+
+    const userPoolDomain = new aws.cognito.UserPoolDomain(`${PROJECT_NAME}-userpool-domain`, {
+      domain: `${$app.stage}-${PROJECT_NAME}`,
+      userPoolId: userPool.id,
+    });
+
+    const fixedUrlForRootDomain = UI_URL?.replace(/(www\.)?/, '');
+    const userPoolClient = userPool.addClient(`${PROJECT_NAME}-web-client`, {
+      providers: [provider.providerName],
+      transform: {
+        client: {
+          callbackUrls: IS_PRODUCTION ? [fixedUrlForRootDomain] : ['http://localhost:5173', fixedUrlForRootDomain],
+          logoutUrls: IS_PRODUCTION ? [fixedUrlForRootDomain] : ['http://localhost:5173', fixedUrlForRootDomain],
+        },
+      },
+    });
+    const userPoolDomainURL = $interpolate`${userPoolDomain.domain}.auth.${AWS_REGION}.amazoncognito.com`;
+    // Cognito Pool <-
+
+    // -> API Function
+    const api = new sst.aws.Function(`${$app.stage}-${PROJECT_NAME}-api`, {
       handler: "packages/api/src/index.handler",
       url: true,
+      environment: {
+        DB_URL: process.env.DB_URL ?? '',
+        COGNITO_USER_POOL_ID: userPool.id,
+        COGNITO_USER_POOL_CLIENT: userPoolClient.id,
+      },
     });
+    // API Function <-
+
+    // -> Lambda API (delete the unused one)
+    const apiGateway = new sst.aws.ApiGatewayV2(`${$app.stage}-${PROJECT_NAME}-gateway`, {
+      cors: true
+    });
+
+    apiGateway.route('$default', api.arn);
+    // Lambda API <-
+
+    // -> EC2 API (delete the unused one)
+    const ec2Client = new EC2Client({ region: AWS_REGION });
+    const vpc = await getOrCreateVpc(ec2Client, VPC_NAME);
 
     /**
      * Example: Setting up Custom Domains with SST
@@ -172,10 +237,21 @@ export default $config({
     // Route all traffic to the ECS service
     // apiGateway.routePrivate("$default", service.nodes.cloudmapService.arn);
 
+    // If we have production, it's URL usually is https://my-app.xyz/
+    // Staging's URL usually is https://my-app.wakeuplabs.link/
+    // production uses root domain and staging a subdomain
+    // this is considered in the StaticSite domain parameter 
+    // EC2 API <-
+
+    // -> UI
+    const domainRoot = UI_URL.replace(/^https?:\/\/(www\.)?/, '');
+    const domainAlias = UI_URL.replace(/^https?:\/\//, '');
+
     const ui = new sst.aws.StaticSite(`${PROJECT_NAME}-ui`, {
       path: "packages/ui",
       domain: {
-        name: `${$app.stage}-${PROJECT_NAME}.wakeuplabs.link`,
+        name: domainRoot,
+        aliases: domainAlias !== domainRoot ? [domainAlias] : [],
       },
       build: {
         command: "npm run build",
@@ -183,14 +259,37 @@ export default $config({
       },
       environment: {
         VITE_API_URL: api.url,
+        VITE_COGNITO_USERPOOL_ID: userPool.id,
+        VITE_COGNITO_USERPOOL_CLIENT_ID: userPoolClient.id,
+        VITE_COGNITO_USERPOOL_DOMAIN: userPoolDomainURL,
+      },
+      assets: {
+        textEncoding: 'utf-8',
+        fileOptions: [
+          {
+            files: ['**/*.css', '**/*.js'],
+            cacheControl: 'max-age=31536000,public,immutable',
+          },
+          {
+            files: '**/*.html',
+            cacheControl: 'max-age=0,no-cache,no-store,must-revalidate',
+          },
+          {
+            files: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg'],
+            cacheControl: 'max-age=31536000,public,immutable',
+          },
+        ],
       },
       indexPage: "index.html",
       errorPage: "index.html",
     });
+    // UI <-
 
     return {
-      api: api.url,
+      api: apiGateway.url,
       ui: ui.url,
+      userPool: userPool.id,
+      userPoolClientId: userPoolClient.id,
     };
   },
 });
