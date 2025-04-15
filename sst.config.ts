@@ -131,7 +131,7 @@ export default $config({
       providers: {
         aws: {
           defaultTags: {
-            tags: { customer: CUSTOMER, stage: input.stage },
+            tags: { customer: CUSTOMER, project: PROJECT_NAME, stage: input.stage },
           },
         },
       },
