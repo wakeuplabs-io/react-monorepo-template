@@ -1,16 +1,5 @@
 # React Monorepo Template
 
-## Node and NPM version
-
-TL;DR
-
-- Node version: 18.18.2
-- npm version: 9.8.1
-
-For now, **API breaks with Node > 18.18**. Node 18.18.2 is required.
-
-Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly with it. In any case, npm workspaces were added in npm 7.0.0, so you should have at least that version (9.8.1 strongly recommended).
-
 ## Create user for deployment (AWS)
 
 1. Go to IAM service
@@ -33,9 +22,7 @@ Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly wit
 
 Intended in order to avoid merge conflicts on this repo
 
-**Don't forget to remove it from git ignore!**
-Package versions should always be defined specifically (without the simbol ^)
-This ensures that even if the lock is deleted, same versions would be reinstalled.
+**Don't forget to remove it from git ignore!**. Package versions should always be defined specifically (without the simbol ^). This ensures that even if the lock is deleted, same versions would be reinstalled.
 
 Having the lock inside your repo is useful for CI package caching and to avoid version diff on fresh install.
 
